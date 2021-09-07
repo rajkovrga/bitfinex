@@ -17,8 +17,8 @@ class AuthMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if(session()->exists('isLogged'))
-            redirect('/');
+        if(session()->exists('isLogin'))
+            redirect('/')->with('error' ,'Need login for this action');
 
         return $next($request);
     }

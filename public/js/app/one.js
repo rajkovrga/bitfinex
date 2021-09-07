@@ -1,52 +1,38 @@
-
 document.addEventListener("DOMContentLoaded", function () {
 
     var Socket = new WebSocket('wss://api-pub.bitfinex.com/ws/2');
     var IsConnected = false;
     // Listen for messages
-    let r = '/fav/';
-    if(document.getElementsByName("types")[0])
-    {
-        r += document.getElementsByName("types")[0].value;
-    }
-
     Socket.addEventListener('message', (msg) => {
         axios({
             method: "get",
-            url: '/refresh' + r,
+            url: `/refresh/ws/t${document.getElementsByName('name')[0].value}`,
             contentType: 'application/json'
         })
             .then(function (response) {
-                console.log(response.data);
 
                 const data = response.data;
-                let r = '';
-
-                for(let i = 0; i < data.length;i++)
-                {
-                    r += `
+                let r = `
                         <tr class="hover:bg-grey-lighter" >
-                                <td class="py-4 px-6 border-b border-grey-light"><a href="/refresh/${data[i][0]}" class="underline">${data[i][0].substr(1, data[i][0].length)}</a></td>
-                                <td class="py-4 px-6 border-b border-grey-light">${data[i][1]}
+                                <td class="py-4 px-6 border-b border-grey-light"> ${data[0][0].substring(1, data[0][0].length)}</td>
+                                <td class="py-4 px-6 border-b border-grey-light">${data[0][1]}
                                 </td>
-                                <td class="py-4 px-6 border-b border-grey-light">${data[i][2]}
+                                <td class="py-4 px-6 border-b border-grey-light">${data[0][2]}
                                 </td>
-                                <td class="py-4 px-6 border-b border-grey-light"> ${(data[i][6] * 100).toFixed(3)}%
+                                <td class="py-4 px-6 border-b border-grey-light"> ${(data[0][6] * 100).toFixed(3)}%
                                 </td>
-                                <td class="py-4 px-6 border-b border-grey-light">${data[i][9]}
+                                <td class="py-4 px-6 border-b border-grey-light">${data[0][9]}
                                 </td>
-                                <td class="py-4 px-6 border-b border-grey-light">${data[i][10]}
+                                <td class="py-4 px-6 border-b border-grey-light">${data[0][10]}
                                 </td>
+                        </tr>`;
 
-                        </tr>
-
-                        `;
-                }
                 document.getElementById('list').innerHTML = r;
             })
             .catch(function (error) {
                 console.log(error);
-            })    });
+            })
+    });
 
     let msg =  {
         event: 'subscribe',
