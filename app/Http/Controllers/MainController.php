@@ -2,19 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AuthService;
 use App\Services\BitfinexService;
-use http\Exception\InvalidArgumentException;
+use App\Services\RedisService;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Session;
 
 class MainController extends Controller
 {
     private $btfService;
-    public function __construct(BitfinexService $btfService)
+    private $redisService;
+    private $authService;
+    public function __construct(BitfinexService $btfService, RedisService $redisService, AuthService $authService)
     {
         $this->btfService = $btfService;
+        $this->redisService = $redisService;
+        $this->authService = $authService;
     }
     public function getOne(Request $request, string $name)
     {
@@ -67,8 +72,13 @@ class MainController extends Controller
     public function login(Request $request)
     {
         try {
-            Session::push('isLogin', true);
+
+            $this->authService->login();
             return redirect('/');
+        }
+        catch (AuthenticationException $exception)
+        {
+            return redirect('/')->with("error" ,'User logged in');
         }
         catch (\Exception $exception)
         {
@@ -78,8 +88,7 @@ class MainController extends Controller
     public function logout(Request $request)
     {
         try {
-            Session::remove('isLogin');
-            Session::flush();
+            $this->authService->logout();
             return redirect('/');
         }
         catch (\Exception $exception)
@@ -92,12 +101,7 @@ class MainController extends Controller
     public function add(Request $request, string $name)
     {
         try {
-            $types = Redis::get('types');
-
-            if(!str_contains($types, $name))
-                throw new \InvalidArgumentException();
-
-            Redis::set('types', $types . ',' . $name);
+            $this->redisService->setType( $name);
 
             return back();
         }
@@ -113,15 +117,8 @@ class MainController extends Controller
     public function remove(Request $request, string $name)
     {
         try {
-            $types = Redis::get('types');
 
-            if($types == null)
-                throw new ModelNotFoundException();
-
-            if(!str_contains($types, $name))
-                throw new ModelNotFoundException();
-
-            Redis::set('types', str_replace(','.$name, "", $types));
+            $this->redisService->removeType( $name);
 
             return back();
         }
